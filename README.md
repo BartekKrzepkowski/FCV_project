@@ -51,6 +51,7 @@ FCV_project/
 ├── config.yaml               # (optional) Training config
 └── README.md                 # Project description
 ```
+---
 
 The detailed project report is available as a PDF:
 
