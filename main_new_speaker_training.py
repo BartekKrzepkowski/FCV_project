@@ -95,6 +95,11 @@ if __name__ == "__main__":
             handlers=[logging.StreamHandler()],
             force=True,
         )
+    
+
+    # ════════════════════════ hyperparameters ════════════════════════ #
+
+    # 4th experiment:
 
     hyperparameters = {
         'optim_name': ['adamw'],

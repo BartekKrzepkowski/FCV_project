@@ -95,6 +95,11 @@ if __name__ == "__main__":
             handlers=[logging.StreamHandler()],
             force=True,
         )
+    
+
+#    # ════════════════════════ hyperparameters ════════════════════════ #
+
+    # 1st experiment:
 
     # hyperparameters = {
     #     'optim_name': ['sgd'],
@@ -107,6 +112,8 @@ if __name__ == "__main__":
     #     'lr': [1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 5e-3, 1e-2],
     #     'weight_decay': [0.0],
     # }
+
+    # 2nd experiment:
 
     # hyperparameters = {
     #     'optim_name': ['sgd'],
@@ -122,12 +129,14 @@ if __name__ == "__main__":
     #     'weight_decay': [0.0, 1e-3, 1e-2, 1e-1],
     # }
 
+    # 3rd experiment:
+
     hyperparameters = {
         'optim_name': ['adamw'],
         'lr': [1e-3],
         'scheduler_name': ['reduce_on_plateau'],
         'weight_decay': [1e-1],
-        'use_bn': [True],
+        'use_bn': [False, True],
         'dropout_p': [0.00, 0.1, 0.25],
         'skip': [False, True],
     }
