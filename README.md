@@ -38,7 +38,11 @@ The goal is to distinguish between **"allowed"** and **"non-allowed"** speakers,
 
 ## 📁 Project Structure
 
+<<<<<<< HEAD
 - **root/**
+=======
+- **root**/
+>>>>>>> ebe5cce (Update README.md)
     - **models/** – models checkpoints
     - **notebooks/** – Jupyter notebooks for experiments and analysis
     - **report/** – detailed report of the project
