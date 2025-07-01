@@ -55,6 +55,4 @@ FCV_project/
 
 The detailed project report is available as a PDF:
 
-[👉 Check the report (PDF)](reports/FoCV Report.pdf)
-
-[👉 Check the report (PDF)]([reports/report.pdf](https://github.com/BartekKrzepkowski/FoCV_project/blob/main/report/FoCV%20Report.pdf))
+[👉 Check the report (PDF)](report/FoCV%20Report.pdf)
