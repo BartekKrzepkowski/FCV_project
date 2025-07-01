@@ -51,3 +51,7 @@ FCV_project/
 ├── config.yaml               # (optional) Training config
 └── README.md                 # Project description
 ```
+
+The detailed project report is available as a PDF:
+
+[👉 Check the report (PDF)]([reports/report.pdf](https://github.com/BartekKrzepkowski/FoCV_project/blob/main/report/FoCV%20Report.pdf))
