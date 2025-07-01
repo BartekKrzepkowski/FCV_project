@@ -8,6 +8,12 @@ import torch
 
 
 def set_seed(seed=0):
+    """
+    Sets the random seed for reproducibility across Python, NumPy, and PyTorch (CPU & CUDA).
+
+    Args:
+        seed (int, optional): Seed value to use. Default is 0.
+    """
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -18,7 +24,14 @@ def set_seed(seed=0):
 
 
 def save_training_artefacts(config, epochs_metrics, save_path):
-    # Zapisywanie konfiguracji, metryk treningowych oraz metryk wartości osobliwych
+    """
+    Saves the training configuration and training metrics to a file.
+
+    Args:
+        config (dict): Training configuration.
+        epochs_metrics (dict): Metrics collected during training.
+        save_path (str): Path to save the artefacts (usually .pth file).
+    """
     to_save = {
         'config': config,
         'metrics': epochs_metrics,
@@ -64,9 +77,13 @@ def load_optim(optimizer, checkpoint_path, device=None):
 
 def yield_hyperparameters(hyperparams):
     """
-    Generator zwracający wszystkie kombinacje hiperparametrów.
-    :param hyperparams: słownik z hiperparametrami
-    :return: generator kombinacji hiperparametrów
+    Generator yielding all combinations of hyperparameters.
+
+    Args:
+        hyperparams (dict): Dictionary where keys are parameter names and values are lists of possible values.
+
+    Yields:
+        tuple: A tuple containing one possible combination of hyperparameters.
     """
     keys = hyperparams.keys()
     yield from product(*(hyperparams[k] for k in keys))

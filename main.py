@@ -171,6 +171,9 @@ if __name__ == "__main__":
     for (optim_name, lr, scheduler_name, weight_decay, use_bn, dropout_p, skip) in yield_hyperparameters(hyperparameters):
 
         class Config:
+            """
+            Holds configuration dictionaries for training, data loading, model, optimizer/scheduler, logging, and extra modules.
+            """
             trainer_params = {
                 'device': device,
                 'seed': 83,

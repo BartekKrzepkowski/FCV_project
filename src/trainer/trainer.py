@@ -10,16 +10,32 @@ from src.utils.utils_trainer import create_paths, update_metrics, adjust_to_log
 from src.utils.utils_visualize import matplotlib_scatters_training, log_to_console, show_and_save_grid
 
 class Trainer:
+    """
+    Manages the **training process** of a machine learning model: initialization, training, validation, testing,
+    checkpoint saving, and metric logging.
+
+    Attributes:
+        model (torch.nn.Module): The model to train.
+        criterion (Dict): Dictionary of loss functions for training and evaluation.
+        loaders (Dict): Data loaders for each phase ('train', 'val', 'test').
+        optim (torch.optim.Optimizer): Optimizer.
+        lr_scheduler (torch.optim.lr_scheduler._LRScheduler): Learning rate scheduler.
+        extra_modules (Dict): Additional modules/utilities.
+        device (str): Device ('cpu' or 'cuda').
+    """
     def __init__(self, model, criterion, loaders, optim, lr_scheduler, extra_modules, device):
+
         """
+        Initializes all core components needed for training.
+
         Args:
-            model (torch.nn.Module): model to train
-            criterions (Dict): dictionary of criterions for training and evaluation
-            loaders (Dict): dictionary of data loaders for different phases (train, val, test)
-            optim (torch.optim.Optimizer): optimizer for training
-            lr_scheduler (torch.optim.lr_scheduler._LRScheduler): learning rate scheduler
-            extra_modules (Dict): dictionary of additional modules or utilities
-            device (str): device to use for training ('cpu' or 'cuda')
+            model (torch.nn.Module): **Model** to be trained.
+            criterion (Dict): **Loss functions** for training and evaluation.
+            loaders (Dict): **Data loaders** for each phase ('train', 'val', 'test').
+            optim (torch.optim.Optimizer): **Optimizer**.
+            lr_scheduler (torch.optim.lr_scheduler._LRScheduler): **Learning rate scheduler**.
+            extra_modules (Dict): **Additional modules** or utilities.
+            device (str): **Device** to use ('cpu' or 'cuda').
         """
         self.model = model
         self.criterion = criterion
@@ -38,8 +54,10 @@ class Trainer:
 
     def at_exp_start(self, config):
         """
-        Initialization of experiment.
-        Creates fullname, dirs and logger.
+        Initializes the **experiment** – creates paths, logger, and sets up logging configuration.
+
+        Args:
+            config: **Configuration** object with experiment parameters.
         """
         self.base_path, self.base_save_path = create_paths(config.trainer_params['base_path'], config.trainer_params['exp_name'])
         config.logger_params['log_dir'] = f'{self.base_path}/{config.logger_params["logger_name"]}'
@@ -52,11 +70,13 @@ class Trainer:
 
 
     def train_model(self, config):
-        '''
-        Main training loop.
+        """
+        The **main training loop**.
+        Handles training, validation, testing, checkpoint saving, metric logging, and early stopping.
+
         Args:
-            config (Config): configuration object with all parameters
-        '''
+            config: **Configuration** object with all training parameters.
+        """
         logging.info('Training started.')
 
         self.at_exp_start(config)
@@ -118,6 +138,17 @@ class Trainer:
     
 
     def run_phase(self, epochs_metrics, phase, config):
+        """
+        Runs **one phase** of training/validation/testing: iterates over batches, collects metrics, logs selected data.
+
+        Args:
+            epochs_metrics (dict): **Dictionary** with epoch metrics.
+            phase (str): **Phase name** ('train', 'val', 'test').
+            config: **Configuration** object.
+
+        Returns:
+            float or None: f1 score for validation phase, otherwise None.
+        """
         logging.info(f'Epoch: {epochs_metrics["epoch"]}, Phase: {phase}.')
         
         running_metrics = {
@@ -155,14 +186,15 @@ class Trainer:
         
 
     def log(self, scope_logs: Dict, phase: str, scope: str, step: int):
-        '''
-        Send chosen assets to logger and progress bar
+        """
+        **Logs** selected metrics and data to the logger and progress bar.
+
         Args:
-            assets (Dict):
-            phase:
-            scope:
-            progress_bar:
-        '''
+            scope_logs (Dict): **Metrics/data** to log.
+            phase (str): **Phase name** ('train', 'val', 'test').
+            scope (str): **Logging scope** ('running', 'epoch').
+            step (int): **Step** (iteration number).
+        """
         scope_logs[f'steps/{phase}_{scope}'] = step
         self.logger.log_scalars(scope_logs, step)
         # progress_bar.set_postfix(evaluators_log)
@@ -172,6 +204,13 @@ class Trainer:
 
 
     def at_epoch_end(self, epoch, epochs_metrics):
+        """
+        Actions performed at the **end of each epoch** – logs metrics, prints results to console.
+
+        Args:
+            epoch (int): **Epoch number**.
+            epochs_metrics (dict): **Dictionary** with epoch metrics.
+        """
         logging.info(f'Epoch {epochs_metrics["epoch"]} finished.')
         # ════════════════════════ logging (epoch) ════════════════════════ #
         epoch_logs = adjust_to_log(epochs_metrics, scope='epoch', window_start=0)
@@ -186,6 +225,13 @@ class Trainer:
         
     
     def at_exp_end(self, config, epochs_metrics):
+        """
+        Actions after the **entire experiment is finished** – saves training artifacts, final checkpoint, closes the logger.
+
+        Args:
+            config: **Configuration** object.
+            epochs_metrics (dict): **Training metrics**.
+        """
         logging.info('Training finished.')
         save_training_artefacts(
             config,
@@ -203,6 +249,16 @@ class Trainer:
 
 
     def infer_from_data(self, data, device):
+        """
+        **Performs inference** (prediction) on a single batch, moving data to the correct device.
+
+        Args:
+            data: **Data batch** (x, y).
+            device: **Device** ('cpu' or 'cuda').
+
+        Returns:
+            tuple: (y_pred, y_true) – model predictions and ground truth labels.
+        """
         x_true, y_true = data
         x_true, y_true = x_true.to(device), y_true.to(device)
         y_pred = self.model(x_true)
@@ -210,6 +266,19 @@ class Trainer:
     
     
     def gather_batch_metrics(self, phase, running_metrics, y_pred, y_true):
+        """
+        Calculates **all metrics** for a single batch (loss, accuracy, precision, recall, f1, etc.)
+        and prepares them for logging.
+
+        Args:
+            phase (str): **Phase name** ('train', 'val', 'test').
+            running_metrics (dict): **Metrics dictionary** to update.
+            y_pred: **Predictions**.
+            y_true: **True labels**.
+
+        Returns:
+            dict: Updated metrics dictionary.
+        """
         loss_list = self.criterion(y_pred, y_true)
   
         loss = loss_list.mean()
