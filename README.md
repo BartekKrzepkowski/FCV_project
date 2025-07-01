@@ -38,13 +38,19 @@ The goal is to distinguish between **"allowed"** and **"non-allowed"** speakers,
 
 ## 📁 Project Structure
 
+```
 FCV_project/
-├── src/ # Source modules
-│ ├── data/ # Dataset classes, augmentation, generators
-│ ├── models/ # CNN architectures
-│ ├── trainer/ # Training and evaluation pipeline
-│ └── utils/ # Helper functions and model utils
-├── notebooks/ # Experiments and live inference
+├── src/                      # Source modules
+│   ├── data/                 # Dataset classes, augmentation, generators
+│   ├── models/               # CNN architectures
+│   ├── trainer/              # Training and evaluation pipeline
+│   └── utils/                # Helper functions and model utils
+├── notebooks/                # Experiments and live inference
+├── best_model.pt             # Trained model checkpoint
+├── requirements.txt          # Dependencies
+├── config.yaml               # (optional) Training config
+└── README.md                 # Project description
+```
 ├── best_model.pt # Trained model checkpoint
 ├── requirements.txt # Dependencies
 └── README.md # Project description
