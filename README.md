@@ -1,4 +1,4 @@
-# 🎙️ FCV Project – Speaker Verification using CNNs and Spectrograms
+# 🎙️ FoCV Project – Speaker Verification using CNNs and Spectrograms
 
 This project focuses on voice-based **binary speaker verification** using **Convolutional Neural Networks (CNNs)** trained on **log-Mel spectrograms** extracted from audio recordings.
 
