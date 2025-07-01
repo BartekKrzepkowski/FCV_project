@@ -51,6 +51,3 @@ FCV_project/
 ├── config.yaml               # (optional) Training config
 └── README.md                 # Project description
 ```
-├── best_model.pt # Trained model checkpoint
-├── requirements.txt # Dependencies
-└── README.md # Project description
