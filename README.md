@@ -26,7 +26,7 @@ The goal is to distinguish between **"allowed"** and **"non-allowed"** speakers,
   - Replay buffer for controlled fine-tuning on new speakers.
 
 - **Evaluation Metrics**:
-  - `F1-score`, `Precision`, `Recall`, `ROC-AUC`
+  - `F1-score`, `Precision`, `Recall`
   - Live inference confidence tracking.
 
 - **Live Inference**:
