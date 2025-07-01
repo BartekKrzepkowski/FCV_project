@@ -76,14 +76,23 @@ class Trainer:
                     save_path=f"{self.base_save_path}/checkpoint_epoch_{epochs_metrics['epoch']}.pth"
                 )
             
-            # 2) Faza treningowa
+            # 2) Training phase
             self.model.train()
             self.run_phase(epochs_metrics, phase='train', config=config)
             
-            # 3) Faza ewaluacji
+            # 3) Validation phase
             with torch.no_grad():
                 self.model.eval()
-                f1_val = self.run_phase(epochs_metrics, phase='val', config=config)
+                f1_val = self.run_phase(epochs_metrics, phase='val', config=config) # lepsza nazwa niż val_f1? desired_trigger?
+
+                # scheduler step
+                if self.lr_scheduler is not None:
+                    if config.optim_scheduler_params['scheduler_name'] == 'reduce_on_plateau':
+                        self.lr_scheduler.step(epochs_metrics['val_losses'][-1])
+                    elif config.optim_scheduler_params['scheduler_name'] == 'cosine':
+                        self.lr_scheduler.step()
+                    else:
+                        raise ValueError(f"Unknown scheduler name: {config.optim_scheduler_params['scheduler_name']}")
 
             # 4) check if early stopping is triggered
             if self.extra_modules['early_stopping'](f1_val, self.model, self.optim, epoch):
@@ -93,10 +102,10 @@ class Trainer:
             # 5) Logowanie metryk
             self.at_epoch_end(epoch, epochs_metrics)
 
-            
 
-
-        if self.extra_modules['early_stopping'].ckpt:
+        if self.extra_modules['early_stopping'].ckpt is not None:
+            logging.info(f"Loading best model, given metric: {self.extra_modules['early_stopping'].mode} {self.extra_modules['early_stopping'].best_score:.4f} \
+                         at epoch {self.extra_modules['early_stopping'].best_epoch}.")
             self.model = load_model(self.model, self.extra_modules['early_stopping'].ckpt)
 
         self.run_phase(epochs_metrics, phase='test', config=config)
@@ -124,7 +133,7 @@ class Trainer:
         
         for i, data in enumerate(self.loaders[phase]):
             y_pred, y_true = self.infer_from_data(data, device=config.trainer_params['device'])
-            running_metrics = self.gather_batch_metrics(phase, running_metrics, y_pred, y_true)   # cos nie działa podczas testowania
+            running_metrics = self.gather_batch_metrics(phase, running_metrics, y_pred, y_true)
 
             # ════════════════════════ logging (running) ════════════════════════ #
 
@@ -172,10 +181,8 @@ class Trainer:
             scope='epoch',
             step=epoch
         )
-        
         # 5) Logowanie metryk do konsoli
-        log_to_console(epochs_metrics)
-        
+        log_to_console(epochs_metrics)    
         
     
     def at_exp_end(self, config, epochs_metrics):
@@ -185,7 +192,6 @@ class Trainer:
             epochs_metrics,
             save_path=f"{self.base_save_path}/training_artefacts.pth"
         )
-
         save_checkpoint(
             self.model,
             self.optim,
@@ -193,7 +199,6 @@ class Trainer:
             save_path=f"{self.base_save_path}/epoch_{epochs_metrics['epoch']}.pth"
         )
         self.logger.close()
-            
         # matplotlib_scatters_training(epochs_metrics, save_path=f"{self.base_path}/metrics.pdf")
 
 
@@ -206,8 +211,7 @@ class Trainer:
     
     def gather_batch_metrics(self, phase, running_metrics, y_pred, y_true):
         loss_list = self.criterion(y_pred, y_true)
-
-        
+  
         loss = loss_list.mean()
             
         if phase == 'train':
@@ -224,7 +228,6 @@ class Trainer:
         batch_size = y_true.shape[0]
 
         # ════════════════════════ gathering scalars to logging ════════════════════════ #
-        
         
         running_metrics[f'{phase}_losses'].append(loss.item() * batch_size)
         running_metrics[f'{phase}_accs'].append(acc * batch_size)

@@ -26,12 +26,12 @@ class ConvBlock(nn.Module):
         out = self.act(self.bn(out)) if self.is_bn_pre_act else self.bn(self.act(out))
         out = self.drop(out)
         if self.skip:
-            out = out + x          # proste skip-connection
+            out = out + x
         return out
 
 class FlexibleCNN(nn.Module):
     """
-    Konfigurowalna sieć do testów:
+    Convolutional Neural Network with flexible configuration.:
     blocks_cfg = [
         dict(out_ch=32, use_bn=True, dropout_p=0.1, skip=False, activation='relu', is_bn_pre_act=True),
         dict(out_ch=64, use_bn=True, dropout_p=0.1, skip=True, activation='relu', is_bn_pre_act=True),
@@ -54,9 +54,9 @@ class FlexibleCNN(nn.Module):
         t = input_time   // (2 ** len(blocks_cfg))
         self.head = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(in_ch * h * t, 128),
+            nn.Linear(in_ch * h * t, 64),
             nn.ReLU(),
-            nn.Linear(128, num_classes)
+            nn.Linear(64, num_classes)
         )
 
     def forward(self, x):

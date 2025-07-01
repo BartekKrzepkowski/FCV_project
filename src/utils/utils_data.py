@@ -14,6 +14,7 @@ from src.utils.mapping_new import DATASET_NAME_MAP
 
 
 def prepare_loaders(data_params):
+    # train_dataset, test_dataset = DATASET_NAME_MAP[data_params['dataset_name']](**data_params['dataset_params'])
     train_dataset, val_dataset, test_dataset = DATASET_NAME_MAP[data_params['dataset_name']](**data_params['dataset_params'])
     
     loaders = {

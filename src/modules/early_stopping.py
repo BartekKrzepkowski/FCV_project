@@ -28,6 +28,7 @@ class EarlyStopping:
         mode: str = 'min',
         delta: float = 0.0,
         checkpoint_path: str | None = None,
+        enable_early_stopping: bool = True
     ):
         assert mode in {'min', 'max'}, "mode musi być 'min' lub 'max'"
         self.patience = patience
@@ -38,6 +39,8 @@ class EarlyStopping:
         self.best_score = np.inf if mode == 'min' else -np.inf
         self.counter = 0
         self.stop = False
+        self.enable_early_stopping = enable_early_stopping
+        self.best_epoch = 0
 
     def __call__(self, metric: float, model: torch.nn.Module, optim: torch.optim.Optimizer, epoch: int) -> bool:
         """
@@ -49,6 +52,7 @@ class EarlyStopping:
         if score > self.best_score + self.delta:
             logging.info(f"Poprawa metryki: {self.mode} {self.best_score:.4f} -> {score:.4f} na ep. {epoch}")
             self.best_score = score
+            self.best_epoch = epoch
             self.counter = 0
             if self.ckpt:
                 save_checkpoint(
@@ -59,7 +63,8 @@ class EarlyStopping:
                 )
                 # torch.save(model.state_dict(), self.ckpt)
         else:
+            logging.info(f"Brak poprawy metryki: {self.mode} {self.best_score:.4f} (aktualna: {score:.4f}) na ep. {epoch}")
             self.counter += 1
-            if self.counter >= self.patience:
+            if self.enable_early_stopping and self.counter >= self.patience:
                 self.stop = True
         return self.stop

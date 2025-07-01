@@ -33,29 +33,8 @@ def prepare_model(model_params, init=None):
         model = load_model(model, model_params['checkpoint_path'])
     else:
         model.apply(default_init)
-    return model
 
-
-def prepare_linear_model(input_dim, n_classes, hidden_dims=[256, 256, 256, 256, 256]):
-    """
-    Buduje **głęboką sieć neuronową** (wielo-warstwowy model liniowy) z warstwami ukrytymi.
-    
-    **Kroki:**
-    - Pierwsza warstwa mapuje dane wejściowe do przestrzeni pierwszej warstwy ukrytej.
-    - Następnie dodajemy kolejne warstwy ukryte z funkcją aktywacji **ReLU**.
-    - Ostatnia warstwa mapuje ostatnią warstwę ukrytą na wyjście (liczba klas).
-    """
-    layers = []
-    # Pierwsza warstwa: wejście -> pierwsza warstwa ukryta
-    layers.append(torch.nn.Linear(input_dim, hidden_dims[0]))
-    # layers.append(nn.ReLU())
-    
-    # Kolejne warstwy ukryte
-    for i in range(1, len(hidden_dims)):
-        layers.append(torch.nn.Linear(hidden_dims[i-1], hidden_dims[i]))
-        # layers.append(nn.ReLU())
-    
-    # Ostatnia warstwa: ostatnia warstwa ukryta -> wyjście
-    layers.append(torch.nn.Linear(hidden_dims[-1], n_classes))
-    model = torch.nn.Sequential(*layers)
+    if model_params['freeze_backbone']:
+        for param in model.encoder.parameters():
+            param.requires_grad = False
     return model

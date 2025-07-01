@@ -47,7 +47,7 @@ def main(config):
     
     # ════════════════════════ prepare criterion ════════════════════════ #
 
-    weights = torch.tensor([1.0, 5017/614], device=device)
+    weights = torch.tensor([1.0, 3168/384], device=device)
     criterion = torch.nn.CrossEntropyLoss(reduction='none', weight=weights)
     logging.info('Criterion prepared.')
 
@@ -57,12 +57,7 @@ def main(config):
 
     extra_modules = {}
 
-    early_stopping = EarlyStopping(
-        patience=20, # how many epochs without improvement to wait before stopping
-        mode='max',
-        delta=1e-4,
-        checkpoint_path="best_model.pt"
-    )
+    early_stopping = EarlyStopping(**config.extra_modules_params['early_stopping'])
 
     extra_modules['early_stopping'] = early_stopping
     logging.info('Extra modules prepared.')
@@ -100,45 +95,99 @@ if __name__ == "__main__":
             handlers=[logging.StreamHandler()],
             force=True,
         )
-    hyperparameters = {
-        'optim_name': ['sgd', 'adamw'],
-        'lr': [5e-3, 1e-2, 5e-2, 1e-1],
-        'weight_decay': [0.0, 1e-2, 1e-1],
-    }
+
+    # hyperparameters = {
+    #     'optim_name': ['sgd'],
+    #     'lr': [1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1],
+    #     'weight_decay': [0.0],
+    # }
+
+    # hyperparameters = {
+    #     'optim_name': ['adamw'],
+    #     'lr': [1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 5e-3, 1e-2],
+    #     'weight_decay': [0.0],
+    # }
+
+    # hyperparameters = {
+    #     'optim_name': ['sgd'],
+    #     'lr': [5e-2],
+    #     'scheduler_name': [None, 'cosine','reduce_on_plateau'],
+    #     'weight_decay': [0.0, 1e-3, 1e-2, 1e-1],
+    # }
+
+    # hyperparameters = {
+    #     'optim_name': ['adamw'],
+    #     'lr': [1e-3],
+    #     'scheduler_name': [None, 'cosine', 'reduce_on_plateau'],
+    #     'weight_decay': [0.0, 1e-3, 1e-2, 1e-1],
+    # }
 
     hyperparameters = {
-        'optim_name': ['sgd', 'adamw'],
-        'lr': [5e-3, 1e-2, 5e-2, 1e-1],
-        'weight_decay': [0.0, 1e-2, 1e-1],
+        'optim_name': ['adamw'],
+        'lr': [1e-3],
+        'scheduler_name': ['reduce_on_plateau'],
+        'weight_decay': [1e-1],
+        'use_bn': [True],
+        'dropout_p': [0.00, 0.1, 0.25],
+        'skip': [False, True],
+    }
+
+    # hyperparameters = {
+    #     'optim_name': ['adamw'],
+    #     'lr_scheduler': [5e-3, 1e-2, 5e-2, 1e-1],
+    #     'weight_decay': [0.0, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1],
+    # }
+
+    # hyperparameters = {
+    #     'optim_name': ['sgd'],
+    #     'lr': [1e-1],
+    #     'weight_decay': [1e-2],
+    # }
+
+    hyperparameters = {
+        'optim_name': ['adamw'],
+        'lr': [1e-3],
+        'scheduler_name': ['reduce_on_plateau'],
+        'weight_decay': [1e-1],
+        'use_bn': [True],
+        'dropout_p': [0.00],
+        'skip': [False],
     }
 
     activation = 'ReLU'
-    dropout_p = 0.0
+    skip = False
+    dropout_p = 0.00
     use_bn = False
     is_bn_pre_act = False
-    skip = False
+
+    scheduler_params = {
+        None: None,
+        'cosine': {'T_max': 200, 'eta_min': 1e-3, 'verbose': True},
+        'reduce_on_plateau': {'mode': 'min', 'factor': 0.8, 'patience': 50, 'verbose': True},
+    }
 
 
-    for (optim_name, lr, weight_decay) in yield_hyperparameters(hyperparameters):
+    # for (optim_name, lr, weight_decay) in yield_hyperparameters(hyperparameters):
+    for (optim_name, lr, scheduler_name, weight_decay, use_bn, dropout_p, skip) in yield_hyperparameters(hyperparameters):
 
         class Config:
             trainer_params = {
                 'device': device,
                 'seed': 83,
-                'n_epochs': 200,
-                'exp_name': f'voices_detection_{optim_name=}_{lr=}_{weight_decay=}', # nazwa eksperymentu, która będzie użyta do tworzenia folderów i logowania
+                'n_epochs': 1000,
+                'exp_name': f'vvoices_detection_{optim_name=}_{lr=}_{weight_decay=}_{scheduler_name=}_{activation=}_{dropout_p=}_{use_bn=}_{is_bn_pre_act=}_{skip=}', # nazwa eksperymentu, która będzie użyta do tworzenia folderów i logowania
                 'base_path': os.environ['REPORTS_DIR'],
                 'load_checkpoint_path': None,    # saving checkpoint of model and optimizer
-                'save_checkpoint_modulo': 20  # how many epochs to save the model
+                'save_checkpoint_modulo': 50,  # how many epochs to save the model
             }
             data_params = {
                 'dataset_name' : 'voices_spectograms',
                 'dataset_params': {
                     'custom_root': '/net/pr2/projects/plgrid/plggdnnp/datasets/VOiCES_devkit',
-                    'df_train_path': 'data/train_spectogram_df1.csv',
-                    'df_val_path': 'data/val_spectogram_df1.csv',
-                    'df_test_path': 'data/test_spectogram_df1.csv',
-                    'use_transform': False, # if True, then use transforms for the base dataset (per side [CIFAR10 at this point])
+                    'df_train_path': 'data/train_spectogram_df.csv',
+                    'df_val_path': 'data/val_spectogram_df.csv',
+                    'df_test_path': 'data/test_spectogram_df.csv',
+                    'use_transform': True, # if True, then use transforms for the base dataset (per side [CIFAR10 at this point])
                 },
                 'loader_params': {'batch_size': 128, 'pin_memory': True, 'num_workers': 12}
             }
@@ -149,20 +198,21 @@ if __name__ == "__main__":
                     'input_height': 80,
                     'input_time': 501,
                     'blocks_cfg': [
-                        dict(out_ch=4, use_bn=use_bn, dropout_p=dropout_p, skip=False, activation=activation, is_bn_pre_act=is_bn_pre_act),
-                        dict(out_ch=8, use_bn=use_bn, dropout_p=dropout_p, skip=False, activation=activation, is_bn_pre_act=is_bn_pre_act),
-                        dict(out_ch=8, use_bn=use_bn, dropout_p=dropout_p, skip=skip, activation=activation, is_bn_pre_act=is_bn_pre_act),
+                        dict(out_ch=16, use_bn=use_bn, dropout_p=dropout_p, skip=False, activation=activation, is_bn_pre_act=is_bn_pre_act),
+                        dict(out_ch=32, use_bn=use_bn, dropout_p=dropout_p, skip=False, activation=activation, is_bn_pre_act=is_bn_pre_act),
+                        dict(out_ch=32, use_bn=use_bn, dropout_p=dropout_p, skip=skip, activation=activation, is_bn_pre_act=is_bn_pre_act),
                         ],
-                    },
+                },
                 'checkpoint_path': None, # path to load model checkpoint
-                'init': None
+                'init': None,
+                'freeze_backbone': False,  # whether to freeze the backbone of the model
             }
             optim_scheduler_params = {
                 'optim_name': optim_name,
                 'optim_params': {'lr': lr, 'weight_decay': weight_decay},
-                'scheduler_name': None,
-                'scheduler_params': None,
                 'checkpoint_path': None,  # path to load optimizer state
+                'scheduler_name': scheduler_name,
+                'scheduler_params': scheduler_params[scheduler_name],
             }
             logger_params = {
                 'logger_name': 'wandb',
@@ -170,6 +220,15 @@ if __name__ == "__main__":
                 'project_name': os.environ['WANDB_PROJECT'],
                 'mode': 'online',   # używając tego określ również czy logować info na dysk
                 # 'hyperparameters': h_params_overall,
+            }
+            extra_modules_params = {
+                'early_stopping': {
+                    'patience': 200,  # how many epochs without improvement to wait before stopping
+                    'mode': 'max',
+                    'delta': 1e-4,
+                    'checkpoint_path': f"models/best_model_{optim_name}_{lr}_{weight_decay}_{activation}_{dropout_p}_{use_bn}_{is_bn_pre_act}_{skip}.pt",
+                    'enable_early_stopping': False,  # whether to enable early stopping
+                }
             }
             
         config = Config()
