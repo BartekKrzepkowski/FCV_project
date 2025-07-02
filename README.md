@@ -41,11 +41,9 @@ The goal is to distinguish between **"allowed"** and **"non-allowed"** speakers,
 ## Project Structure
 
 - **FCV_PROJECT/**
-    - **data/** – input data for the project
     - **models/** – models checkpoints
     - **notebooks/** – Jupyter notebooks for experiments and analysis
     - **report/** – detailed report of the project
-    - **slurm_logs/** – logs from runs (e.g., on a SLURM cluster)
     - **src/** – project source code:
         - **configs/** – configuration files
         - **data/** – modules for data loading and processing
