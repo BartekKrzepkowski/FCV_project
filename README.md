@@ -38,19 +38,28 @@ The goal is to distinguish between **"allowed"** and **"non-allowed"** speakers,
 
 ## 📁 Project Structure
 
-```
-FCV_project/
-├── src/                      # Source modules
-│   ├── data/                 # Dataset classes, augmentation, generators
-│   ├── models/               # CNN architectures
-│   ├── trainer/              # Training and evaluation pipeline
-│   └── utils/                # Helper functions and model utils
-├── notebooks/                # Experiments and live inference
-├── best_model.pt             # Trained model checkpoint
-├── requirements.txt          # Dependencies
-├── config.yaml               # (optional) Training config
-└── README.md                 # Project description
-```
+## Project Structure
+
+- **FCV_PROJECT/**
+    - **data/** – input data for the project
+    - **models/** – models checkpoints
+    - **notebooks/** – Jupyter notebooks for experiments and analysis
+    - **report/** – detailed report of the project
+    - **slurm_logs/** – logs from runs (e.g., on a SLURM cluster)
+    - **src/** – project source code:
+        - **configs/** – configuration files
+        - **data/** – modules for data loading and processing
+        - **modules/** – main project modules (e.g., network layers, ML components)
+        - **trainer/** – model training logic
+        - **utils/** – utility/helper functions
+        - **visualization/** – scripts for data and results visualization
+    - **.gitignore** – specifies files/folders to ignore in the repository
+    - **main_new_speaker_training.py** – script for new speaker training
+    - **main.py** – main script for running the project
+    - **README.md** – project documentation
+    - **run_main_new_speaker.sh** – bash script for running new speaker training
+    - **run_main.sh** – bash script for running the main process
+
 ---
 
 The detailed project report is available as a PDF:
