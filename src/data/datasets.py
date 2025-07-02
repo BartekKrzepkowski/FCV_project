@@ -57,15 +57,40 @@ class RemappedSubsetDataset(Dataset):
 
 
 class SpectrogramDataset(torch.utils.data.Dataset):
+    """
+    Custom PyTorch Dataset for loading spectrograms and labels from a dataframe.
+
+    Args:
+        df (pandas.DataFrame): DataFrame with at least columns 'filename' and 'label'.
+        custom_root (str): Path to the directory containing spectrogram files.
+        transform (callable, optional): Optional transform to apply to each spectrogram.
+    """
     def __init__(self, df, custom_root, transform=None):
         self.df = df
         self.custom_root = custom_root
         self.transform = transform
 
     def __len__(self):
+        """
+        Returns the number of samples in the dataset.
+
+        Returns:
+            int: Total number of samples.
+        """
         return len(self.df)
 
     def __getitem__(self, idx):
+        """
+        Loads a single spectrogram and its label by index.
+
+        Args:
+            idx (int): Index of the sample to load.
+
+        Returns:
+            tuple: (spectrogram, label), where
+                spectrogram (torch.Tensor): Loaded spectrogram tensor (C, H, W).
+                label (int or tensor): Corresponding class label.
+        """
         filename =  os.path.join(self.custom_root, self.df.iloc[idx]['filename'])
         label = self.df.iloc[idx]['label']
         spectrogram = torch.load(filename, weights_only=True).float()

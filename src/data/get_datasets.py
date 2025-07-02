@@ -1,24 +1,60 @@
+import random
+import glob
+from pathlib import Path
+from typing import List
+
 import pandas as pd
 import torch
-import torchvision.transforms as T
+import torchaudio
 import torchaudio.transforms as AT
+import torchvision.transforms as T
+from tqdm import tqdm
 
 from src.data.datasets import SpectrogramDataset
-import random
+
 
 def freq_shift(max_bins=2):
+    """
+    Returns a transform function that randomly shifts a spectrogram along the frequency axis.
+
+    Args:
+        max_bins (int, optional): Maximum number of bins to shift (in both directions). Default is 2.
+
+    Returns:
+        callable: Function that applies frequency shift to a spectrogram.
+    """
     def _fn(spec):
         shift = random.randint(-max_bins, max_bins)
         return torch.roll(spec, shifts=shift, dims=-2)
     return _fn
 
 def db_jitter(low=-2.0, high=2.0):
+    """
+    Returns a transform function that adds uniform random noise (in dB) to the spectrogram.
+
+    Args:
+        low (float, optional): Lower bound for noise. Default is -2.0.
+        high (float, optional): Upper bound for noise. Default is 2.0.
+
+    Returns:
+        callable: Function that adds dB jitter to a spectrogram.
+    """
     def _fn(spec):
         noise = torch.empty_like(spec).uniform_(low, high)
         return spec + noise
     return _fn
 
 def cutout_rect(time_size=10, freq_size=10):
+    """
+    Returns a transform function that masks out a rectangular region in the spectrogram (cutout augmentation).
+
+    Args:
+        time_size (int, optional): Size of the mask along the time axis. Default is 10.
+        freq_size (int, optional): Size of the mask along the frequency axis. Default is 10.
+
+    Returns:
+        callable: Function that applies cutout to a spectrogram.
+    """
     def _fn(spec):
         t0 = random.randint(0, spec.shape[-1] - time_size - 1)
         f0 = random.randint(0, spec.shape[-2] - freq_size - 1)
@@ -26,10 +62,16 @@ def cutout_rect(time_size=10, freq_size=10):
         return spec
     return _fn
 
-import random, glob, torch, torchaudio
-from pathlib import Path
 
 class AdditiveNoiseSNR:
+    """
+    Adds random background noise at a random SNR to a waveform.
+
+    Args:
+        snr_range (tuple, optional): Range of SNRs in dB to sample from. Default is (10, 30).
+        noise_dir (str, optional): Directory with noise wav files. Default is 'musan/noise'.
+        sample_rate (int, optional): Sample rate for all files. Default is 16000.
+    """
     def __init__(self, snr_range=(10, 30), noise_dir="musan/noise", sample_rate=16_000):
         self.snr_range   = snr_range
         self.sample_rate = sample_rate
@@ -60,6 +102,14 @@ class AdditiveNoiseSNR:
 
 
 class ReverbRIR:
+    """
+    Applies random real room impulse response (RIR) to a waveform (simulates reverberation).
+
+    Args:
+        rir_dir (str, optional): Directory with RIR wav files. Default is 'RIRS_NOISES/real_rir'.
+        prob (float, optional): Probability of applying reverb. Default is 0.6.
+        sample_rate (int, optional): Sample rate for all files. Default is 16000.
+    """
     def __init__(self, rir_dir="RIRS_NOISES/real_rir", prob=0.6, sample_rate=16_000):
         self.prob        = prob
         self.sample_rate = sample_rate
@@ -83,13 +133,13 @@ class ReverbRIR:
 
 class SpecCrop5s:
     """
-    Przytnij lub dopaduj spektrogram do 5 s (≈ 501 ramek).
+    Crop or pad a spectrogram to a fixed number of frames (default: 501, ≈5 seconds).
 
     Args:
-        target_frames (int): liczba ramek po przycięciu; domyślnie 501
-        random_start  (bool): True → losowy start; False → od początku
-        pad_with      (str): 'repeat'- powtarza ostatnią ramkę,
-                             'zeros' - dopaduje zerami
+        target_frames (int, optional): Number of frames after cropping/padding. Default is 501.
+        random_start (bool, optional): If True, randomly choose crop start (for training). Default is True.
+        pad_with (str, optional): Padding method: 'repeat' (repeat last frame) or 'zeros' (pad with zeros). Default is 'repeat'.
+        phase (str, optional): 'train' or 'val' (random crop for train, deterministic for val/test). Default is 'train'.
     """
     def __init__(self,
                  target_frames: int = 501,
@@ -105,8 +155,13 @@ class SpecCrop5s:
 
     def __call__(self, spec: torch.Tensor) -> torch.Tensor:
         """
-        spec: Tensor [..., mels, frames]  lub  [mels, frames]
-        Zwraca tensor o tej samej liczbie wymiarów z frames == 501.
+        Applies cropping or padding to the input spectrogram.
+
+        Args:
+            spec (torch.Tensor): Input spectrogram tensor [..., mels, frames] or [mels, frames].
+
+        Returns:
+            torch.Tensor: Output spectrogram with fixed number of frames.
         """
         if spec.dim() == 3:    # [C, mels, frames]
             mels_dim, time_dim = -2, -1
@@ -142,6 +197,20 @@ class SpecCrop5s:
 
 
 def get_voices(custom_root, df_train_path, df_val_path, df_test_path, use_transform=False):
+    """
+    Loads train, validation, and test datasets as SpectrogramDataset instances, 
+    optionally applying augmentations.
+
+    Args:
+        custom_root (str): Root directory for spectrogram files.
+        df_train_path (str): Path to training set CSV.
+        df_val_path (str): Path to validation set CSV.
+        df_test_path (str): Path to test set CSV.
+        use_transform (bool, optional): Whether to apply augmentations/transforms. Default is False.
+
+    Returns:
+        tuple: (train_dataset, val_dataset, test_dataset) — each is a SpectrogramDataset instance.
+    """
     df_train = pd.read_csv(df_train_path)
     df_val = pd.read_csv(df_val_path)
     df_test = pd.read_csv(df_test_path)
@@ -189,10 +258,16 @@ def get_voices(custom_root, df_train_path, df_val_path, df_test_path, use_transf
     return train_dataset, val_dataset, test_dataset
 
 
-from tqdm import tqdm
-from typing import List
-
 def compute_global_mean_std_from_paths(paths: List[str]) -> tuple[torch.Tensor, torch.Tensor]:
+    """
+    Computes the global mean and standard deviation of a list of spectrogram files.
+
+    Args:
+        paths (list of str): List of paths to spectrogram files.
+
+    Returns:
+        tuple: (mean, std) — both as torch.Tensor scalars.
+    """
     total_sum = 0.0
     total_sumsq = 0.0
     total_count = 0
