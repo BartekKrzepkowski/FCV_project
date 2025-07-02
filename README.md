@@ -38,8 +38,6 @@ The goal is to distinguish between **"allowed"** and **"non-allowed"** speakers,
 
 ## 📁 Project Structure
 
-## Project Structure
-
 - **FCV_PROJECT/**
     - **models/** – models checkpoints
     - **notebooks/** – Jupyter notebooks for experiments and analysis
